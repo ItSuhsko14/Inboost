@@ -1,7 +1,8 @@
 import React, {useEffect} from 'react';
 import './style.css';
 import {useDispatch, useSelector} from 'react-redux';
-import {selectNote} from './../../redux/noteSlice';
+import {selectNote, store} from './../../redux/noteSlice';
+import {loadNotes, setNotes} from './../../redux/noteSlice';
 
 function Sidebar() {
     const dispatch = useDispatch();
@@ -10,10 +11,22 @@ function Sidebar() {
     const selectedId = useSelector(state => state.notes.selectedNoteId);
 
     const handleSelect = (curId) => {
-        dispatch(selectNote({
-          id: curId
-        }));
+        dispatch(selectNote({ id: curId }));
     }
+
+    useEffect(() => {
+        // Завантаження збережених нотаток з IndexedDB
+        dispatch(loadNotes());
+    
+        // Якщо необхідно, збереження нових нотаток в IndexedDB
+        const unsubscribe = store.subscribe(() => {
+          const notes = store.getState().notes.notes;
+          dispatch(setNotes(notes));
+        });
+    
+        return unsubscribe;
+      }, [dispatch]);
+    
 
     return (
         <div className='sidebar'>

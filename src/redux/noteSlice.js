@@ -1,4 +1,5 @@
 import { configureStore, createSlice } from '@reduxjs/toolkit';
+import { idbMiddleware } from './../idb/idbMiddleware';
 
 const initialState = {
   notes: [],
@@ -26,6 +27,13 @@ export const notesSlice = createSlice({
         state.notes[noteIndex].text = text;
       }
     },
+    renameNote: (state, action) => {
+      const { id, title } = action.payload;
+      const noteIndex = state.notes.findIndex((note) => note.id === id);
+      if (noteIndex !== -1) {
+        state.notes[noteIndex].title = title;
+      }
+    },
     setSearchTerm: (state, action) => {
       state.searchTerm = action.payload;
     },
@@ -35,7 +43,7 @@ export const notesSlice = createSlice({
   },
 });
 
-export const { addNote, deleteNote, updateNote, setSearchTerm, selectNote } =
+export const { addNote, deleteNote, updateNote, setSearchTerm, selectNote, renameNote } =
   notesSlice.actions;
 
 
@@ -43,4 +51,21 @@ export const { addNote, deleteNote, updateNote, setSearchTerm, selectNote } =
     reducer: {
       notes: notesSlice.reducer,
     },
+    middleware: (getDefaultMiddleware) => 
+    getDefaultMiddleware().concat(idbMiddleware),
   });
+
+  store.dispatch({ type: 'notes/loadNotes' });
+
+  export const setNotes = (notes) => {
+    return {
+      type: 'notes/setNotes',
+      payload: notes,
+    };
+  };
+
+  export const loadNotes = () => {
+    return {
+      type: 'notes/loadNotes',
+    };
+  };

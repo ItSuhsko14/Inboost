@@ -4,9 +4,11 @@ import { v4 as uuidv4 } from 'uuid';
 import {
     addNote,
     deleteNote,
+    updateNote, 
     editNote,
     selectNote,
-    searchNotes
+    searchNotes,
+    renameNote
 } from './../../redux/noteSlice.js';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -19,23 +21,36 @@ function Toolbar() {
     const [searchTerm, setSearchTerm] = useState('');
 
     const notes = useSelector(state => state.notes.notes);
-    console.log();
+    console.log(notes);
 
     const handleAddNote = () => {
+        const curId = uuidv4();
         dispatch(addNote({
-          id: uuidv4(),
+          id: curId,
           title: 'New Note',
           text: 'Some text',
         }));
+        dispatch(selectNote({ id: curId }));
     }
 
     const handleEdit = () => {
         console.log('ClickEdit')
+        const id = selectedId.id;
+        const oldTitle = notes.find( (note) => {
+            if (selectedId) {
+              return note.id === selectedId.id
+            }
+        });
+        console.log(oldTitle.title);
+        const title = prompt('введіть нову назву', oldTitle.title)
+        dispatch(renameNote({
+            id: id,
+            title: title
+         }))
     }
 
     const selectedId = useSelector(state => state.notes.selectedNoteId);
     
-
     const removeNote = (e) => {
         
         const id = selectedId.id;    

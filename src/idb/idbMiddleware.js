@@ -1,41 +1,34 @@
 import { openDB } from 'idb';
+import { setNotes } from './../redux/noteSlice';
 
-const notesMiddleware = storeAPI => next => action => {
-  if (action.type === 'notes/saveNote') {
-    const { id, title, content } = action.payload;
-    openDB('notesDB', 1, {
-      upgrade(db) {
-        db.createObjectStore('notes');
-      },
-    })
-      .then(db => {
-        const tx = db.transaction('notes', 'readwrite');
-        tx.objectStore('notes').put({ id, title, content });
-        return tx.complete;
-      })
-      .then(() => {
-        console.log('Note saved to IndexedDB');
-      })
-      .catch(error => {
-        console.log('Error saving note to IndexedDB:', error);
-      });
+const dbPromise = openDB('notes', 1, {
+  upgrade(db) {
+    db.createObjectStore('notes', { keyPath: 'id' });
+  },
+});
+
+export const idbMiddleware = (store) => (next) => async (action) => {
+  const { dispatch } = store;
+  if (action.type === 'notes/setNotes') {
+    const db = await dbPromise;
+    const tx = db.transaction('notes', 'readwrite');
+    const store = tx.objectStore('notes');
+    await store.clear();
+    action.payload.forEach((note) => {
+      store.add(note);
+    });
+    await tx.complete;
   }
+
+  const result = next(action);
 
   if (action.type === 'notes/loadNotes') {
-    openDB('notesDB', 1)
-      .then(db => {
-        const tx = db.transaction('notes', 'readonly');
-        return tx.objectStore('notes').getAll();
-      })
-      .then(notes => {
-        storeAPI.dispatch({ type: 'notes/notesLoaded', payload: notes });
-      })
-      .catch(error => {
-        console.log('Error loading notes from IndexedDB:', error);
-      });
+    const db = await dbPromise;
+    const tx = db.transaction('notes', 'readonly');
+    const objectStore = tx.objectStore('notes');
+    const notes = await objectStore.getAll();
+    dispatch(setNotes(notes));
   }
 
-  return next(action);
+  return result;
 };
-
-export default notesMiddleware;
