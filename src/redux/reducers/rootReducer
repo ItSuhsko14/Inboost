@@ -1,0 +1,10 @@
+import { combineReducers } from '@reduxjs/toolkit';
+import notesReducer from './features/notes/notesSlice';
+import searchReducer from './features/search/searchSlice';
+
+const rootReducer = combineReducers({
+  notes: notesReducer,
+  search: searchReducer,
+});
+
+export default rootReducer;
