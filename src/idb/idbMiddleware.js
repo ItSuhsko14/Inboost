@@ -9,6 +9,7 @@ const dbPromise = openDB('notes', 1, {
 
 export const idbMiddleware = (store) => (next) => async (action) => {
   const { dispatch } = store;
+  
   if (action.type === 'notes/setNotes') {
     const db = await dbPromise;
     const tx = db.transaction('notes', 'readwrite');
